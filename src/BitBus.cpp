@@ -9,19 +9,25 @@
 #error "Only Arduino UNO and Arduino Nano currently supported"
 #endif
 
-SoftwareSerial BBSerial;
 
 // Class Constructor
 BitBusClass::BitBusClass()
 {
   isInit = false;
+  bbSerial = NULL;
 }
  
 // First call to the library
 void BitBusClass::begin(unsigned long baudRate, int rx, int tx)
 {
-  BBSerial.configure(rx, tx);
-  BBSerial.begin(baudRate);
+  // Check to see if we are re-starting the same instance
+  if (bbSerial) {
+    free(bbSerial);
+  }
+  // TODO(ericzundel) Get rid of dynamic allocation
+  SoftwareSerial *newSerial = new SoftwareSerial(rx, tx);
+  newSerial->begin(baudRate);
+  bbSerial = newSerial;
 }
 
 // Process incoming input from the serial port

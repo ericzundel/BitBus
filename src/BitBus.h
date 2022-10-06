@@ -18,20 +18,22 @@
 #define BitBus_h
 
 #include "Arduino.h"
+#include "Stream.h"
 
 class BitBusClass
 {
-  public:
-    BitBusClass();
-    
-    // Library Initialization
-    void begin(unsigned long baudRate=9600, int rx=2, int tx=3);
-    // Processing Incomming Frames
-    void processInput();
-    
-  private:
-    void init();
-    static bool isInit;
+public:
+  BitBusClass();
+  
+  // Library Initialization
+  void begin(unsigned long baudRate=9600, int rx=2, int tx=3);
+  // Processing Incomming Frames
+  void processInput();
+  
+private:
+  void init();
+  static bool isInit;
+  Stream * bbSerial;
 };
 
 // Extern Object
