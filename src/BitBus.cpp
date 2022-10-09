@@ -9,11 +9,12 @@
 #error "Only Arduino UNO and Arduino Nano currently supported"
 #endif
 
+// Singleton to communicate with BitBus app
+BitBusClass BitBus;
 
 // Class Constructor
 BitBusClass::BitBusClass()
 {
-  isInit = false;
   bbSerial = NULL;
 }
  
@@ -33,19 +34,10 @@ void BitBusClass::begin(unsigned long baudRate, int rx, int tx)
 // Process incoming input from the serial port
 void BitBusClass::processInput()
 {
-  /* This method maintains the interface of the Dabble library, but
-   * doesn't work internally like it with a set of module subclasses.
-   * Just punt processing over the the GamePad module because that 
+  if (bbSerial->available()) {
+  /* Just punt processing over the the GamePad module because that 
    * is all the library suports right now.
    */
-  GamePad._processInput();
-}
-
-// Private one time initialization
-void BitBusClass::init()
-{
-  if (isInit) {
-    return;
+    GamePad._processInput(bbSerial->read());
   }
-  isInit = true;
 }

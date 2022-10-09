@@ -8,14 +8,11 @@
 
 #include "Arduino.h"
 
-// Action Button Bit Reference
-// For member action_button_value
-#define START_BIT 0
-#define SELECT_BIT 1
-#define TRIANGLE_BIT 2
-#define CIRCLE_BIT 3
-#define CROSS_BIT 4
-#define SQUARE_BIT 5
+enum GAMEPAD_ERROR {
+  GP_OK = 0,
+  GP_ERROR_EXPECTED_CONSTANT = 10,
+  GP_ERROR_UNHANDLED_MESSAGE_TYPE = 11,
+};
 
 class GamePadModule
 {
@@ -41,6 +38,10 @@ class GamePadModule
   //  uint16_t getAngle();
   //  uint8_t getRadius();
   //  bool isPressed(uint8_t a);
+  
+  // TODO(ericzundel) Should I use floating point? The Dabble 
+  // class uses floating point, but the BitBus is all integer math.
+  //
   //  float getJoystickData(uint8_t b);
   //  float getx_axis();
   //  float gety_axis();
@@ -49,15 +50,14 @@ class GamePadModule
   //  float getYaxisData();
 
   // This method is only meant to be called by the BitBus module
-  void _processInput();
+  int _processInput(int inputChar);
 
  private:
-  uint8_t action_buttons;
-  uint8_t pos_left;
-  uint8_t pos_right;
-  uint8_t pos_front;
-  uint8_t pos_back;
-
+  uint8_t actionButtons;
+  uint8_t posLeft;
+  uint8_t posRight;
+  uint8_t posFront;
+  uint8_t posBack;
 };
 
 extern GamePadModule GamePad;
