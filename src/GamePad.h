@@ -54,10 +54,11 @@ class GamePadModule
 
  private:
   uint8_t actionButtons;
+  uint8_t positionButtons;
   uint8_t posLeft;
   uint8_t posRight;
-  uint8_t posFront;
-  uint8_t posBack;
+  uint8_t posUp;
+  uint8_t posDown;
 };
 
 extern GamePadModule GamePad;
