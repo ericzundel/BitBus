@@ -14,10 +14,9 @@
  */
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(57600);      // make sure your Serial Monitor is also set at this baud rate.
-  BitBus.begin(9600);      //Enter baudrate of your bluetooth.Connect bluetooth on Bluetooth port present on evive.
+  Serial.begin(57600);    // Make sure your Serial Monitor is also set at this baud rate.
+  BitBus.begin(9600);     // Enter baudrate of your bluetooth.Connect bluetooth on Bluetooth port present on your Arduino.
 }
-
 
 _MessageBuffer mb;
 
@@ -53,30 +52,30 @@ void testMessageBufferInternals() {
 void testMessageBufferActionButtons() {
   printTest("MessageBufferActions");
 
-  Serial.println(" Test MT_TRIANGLE");
+  Serial.println(" Test MT_BUTTON_B");
   mb.clear();
   ASSERTV(mb.messageType == MT_UNKNOWN, "expected MT_UNKNOWN", mb.messageType);
   ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
   mb.processInput('B');
-  ASSERTV(mb.messageType == MT_TRIANGLE, "expected MT_TRIANGLE", mb.messageType);
+  ASSERTV(mb.messageType == MT_BUTTON_B, "expected MT_BUTTON_B", mb.messageType);
   ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState);
 
-  Serial.println(" Test MT_CIRCLE");
+  Serial.println(" Test MT_BUTTON_Y");
   mb.clear();
   mb.processInput('Y');
-  ASSERTV(mb.messageType == MT_CIRCLE, "expected MT_CIRCLE", mb.messageType);
+  ASSERTV(mb.messageType == MT_BUTTON_Y, "expected MT_BUTTON_Y", mb.messageType);
   ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState);
 
-  Serial.println(" Test MT_CROSS");
+  Serial.println(" Test MT_BUTTON_X");
   mb.clear();
   mb.processInput('X');
-  ASSERTV(mb.messageType == MT_CROSS, "expected MT_CROSS", mb.messageType);
+  ASSERTV(mb.messageType == MT_BUTTON_X, "expected MT_BUTTON_X", mb.messageType);
   ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState);
 
-  Serial.println(" Test MT_SQUARE");
+  Serial.println(" Test MT_BUTTON_A");
   mb.clear();
   mb.processInput('A');
-  ASSERTV(mb.messageType == MT_SQUARE, "expected MT_SQUARE", mb.messageType);
+  ASSERTV(mb.messageType == MT_BUTTON_A, "expected MT_BUTTON_A", mb.messageType);
   ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState);
 
   Serial.println(" Test MT_SELECT");
@@ -243,13 +242,16 @@ void testGamePadInternal() {
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
   ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
   ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
   ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
   ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
   ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
   ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
   ASSERT(!GamePad.isStartPressed(), "unexpected START");
   ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
-    Serial.println(" Testing _clear");
 
   Serial.println(" Testing Start button");
   sendToGamePadProcessInput("S");
@@ -257,6 +259,10 @@ void testGamePadInternal() {
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
   ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
   ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
   ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
   ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
   ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
@@ -264,14 +270,110 @@ void testGamePadInternal() {
   ASSERT(GamePad.isStartPressed(), "expected START");
   ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
 
+  Serial.println(" Testing _clear");
   // Nothing should be set
   GamePad._clear();
   ASSERT(!GamePad.isUpPressed(), "unexpected UP");
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
   ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
   ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
   ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
   ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
+  ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
+  ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
+  ASSERT(!GamePad.isStartPressed(), "unexpected START");
+  ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
+
+  
+  Serial.println(" Testing Select button");
+  GamePad._clear();
+  sendToGamePadProcessInput("C");
+  ASSERT(!GamePad.isUpPressed(), "unexpected UP");
+  ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
+  ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
+  ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
+  ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
+  ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
+  ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
+  ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
+  ASSERT(!GamePad.isStartPressed(), "unexpected START");
+  ASSERT(GamePad.isSelectPressed(), "expected SELECT");
+
+  Serial.println(" Testing A/Square button");
+  GamePad._clear();
+  sendToGamePadProcessInput("A");
+  ASSERT(!GamePad.isUpPressed(), "unexpected UP");
+  ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
+  ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
+  ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(GamePad.isAPressed(), "expected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
+  ASSERT(GamePad.isSquarePressed(), "expected SQUARE");
+  ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
+  ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
+  ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
+  ASSERT(!GamePad.isStartPressed(), "unexpected START");
+  ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
+
+  Serial.println(" Testing B/Triangle button");
+  GamePad._clear();
+  sendToGamePadProcessInput("B");
+  ASSERT(!GamePad.isUpPressed(), "unexpected UP");
+  ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
+  ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
+  ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(GamePad.isBPressed(), "expected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
+  ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
+  ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
+  ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
+  ASSERT(GamePad.isTrianglePressed(), "expected TRIANGLE");
+  ASSERT(!GamePad.isStartPressed(), "unexpected START");
+  ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
+
+  Serial.println(" Testing X/Cross button");
+  GamePad._clear();
+  sendToGamePadProcessInput("X");
+  ASSERT(!GamePad.isUpPressed(), "unexpected UP");
+  ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
+  ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
+  ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(GamePad.isXPressed(), "expected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
+  ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
+  ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
+  ASSERT(GamePad.isCrossPressed(), "expected CROSS");
+  ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
+  ASSERT(!GamePad.isStartPressed(), "unexpected START");
+  ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
+
+  Serial.println(" Testing Y/Circle button");
+  GamePad._clear();
+  sendToGamePadProcessInput("Y");
+  ASSERT(!GamePad.isUpPressed(), "unexpected UP");
+  ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
+  ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
+  ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(GamePad.isYPressed(), "expected Y");
+  ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
+  ASSERT(GamePad.isCirclePressed(), "expected CIRCLE");
   ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
   ASSERT(!GamePad.isTrianglePressed(), "unexpected TRIANGLE");
   ASSERT(!GamePad.isStartPressed(), "unexpected START");
@@ -284,6 +386,10 @@ void testGamePadInternal() {
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
   ASSERT(!GamePad.isLeftPressed(), "unexpected LEFT");
   ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
   ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
   ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
   ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
@@ -302,6 +408,10 @@ void testGamePadInternal() {
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
   ASSERT(GamePad.isLeftPressed(), "expected LEFT");
   ASSERT(!GamePad.isRightPressed(), "unexpected RIGHT");
+  ASSERT(!GamePad.isAPressed(), "unexpected A");
+  ASSERT(!GamePad.isBPressed(), "unexpected B");
+  ASSERT(!GamePad.isXPressed(), "unexpected X");
+  ASSERT(!GamePad.isYPressed(), "unexpected Y");
   ASSERT(!GamePad.isSquarePressed(), "unexpected SQUARE");
   ASSERT(!GamePad.isCirclePressed(), "unexpected CIRCLE");
   ASSERT(!GamePad.isCrossPressed(), "unexpected CROSS");
@@ -364,4 +474,3 @@ void loop() {
   delay(5000);
   unitTest();
 }
-

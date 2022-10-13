@@ -23,10 +23,18 @@ class GamePadModule
   //Checker Functions
   bool isStartPressed();
   bool isSelectPressed();
-  bool isTrianglePressed();
-  bool isCirclePressed();
-  bool isCrossPressed();
-  bool isSquarePressed();
+
+
+  bool isAPressed();
+  bool isBPressed();
+  bool isYPressed();
+  bool isXPressed();
+
+  // Dabble Compatibility functions
+  bool isTrianglePressed(); // Same as Button B
+  bool isCirclePressed();   // Same as Button Y
+  bool isCrossPressed();    // Same as Button X
+  bool isSquarePressed();   // Same as Button A
 
   bool isUpPressed();
   bool isDownPressed();

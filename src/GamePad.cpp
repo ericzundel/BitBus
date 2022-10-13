@@ -12,10 +12,17 @@
 // For member action_button_value
 #define START_BIT 0
 #define SELECT_BIT 1
-#define TRIANGLE_BIT 2
-#define CIRCLE_BIT 3
-#define CROSS_BIT 4
-#define SQUARE_BIT 5
+
+#define BUTTON_A_BIT 2
+#define BUTTON_B_BIT 3
+#define BUTTON_X_BIT 4
+#define BUTTON_Y_BIT 5
+
+// For compatibility with Dabble
+#define TRIANGLE_BIT BUTTON_B_BIT
+#define CIRCLE_BIT BUTTON_Y_BIT
+#define CROSS_BIT BUTTON_X_BIT
+#define SQUARE_BIT BUTTON_A_BIT
 
 #define UP_BIT 0
 #define DOWN_BIT 1
@@ -43,30 +50,33 @@ struct state_entry {
 #define DIGIT    (uint8_t)0xFE
 
 const struct state_entry stateTable[] = {
-  {IS_START,                      'S',      NULL,                          IS_MESSAGE_READY,              MT_START_BUTTON},
-  {IS_START,                      'C',      NULL,                          IS_MESSAGE_READY,              MT_SELECT},
-  {IS_START,                      'B',      NULL,                          IS_MESSAGE_READY,              MT_TRIANGLE},
-  {IS_START,                      'Y',      NULL,                          IS_MESSAGE_READY,              MT_CIRCLE,},
-  {IS_START,                      'X',      NULL,                          IS_MESSAGE_READY,              MT_CROSS},
-  {IS_START,                      'A',      NULL,                          IS_MESSAGE_READY,              MT_SQUARE},
-  {IS_START,                      'L',      NULL,                          IS_WAITING_FOR_L_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'R',      NULL,                          IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'B',      NULL,                          IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'F',      NULL,                          IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_L_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,  IS_WAITING_FOR_L_DIGIT_2,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_L_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,  IS_WAITING_FOR_L_DIGIT_3_OR_R, MT_ANALOG_POSITION},
+  {IS_START,                      'S',      NULL,                             IS_MESSAGE_READY,              MT_START_BUTTON},
+  {IS_START,                      'C',      NULL,                             IS_MESSAGE_READY,              MT_SELECT},
+  {IS_START,                      'A',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_A},
+  {IS_START,                      'B',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_B},
+  {IS_START,                      'X',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_X},
+  {IS_START,                      'Y',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_Y},
+  {IS_START,                      'L',      NULL,                             IS_WAITING_FOR_L_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_CONSTANT,       'R',      NULL,                             IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_CONSTANT,       'B',      NULL,                             IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_CONSTANT,       'F',      NULL,                             IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_L_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_L_DIGIT_2,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_L_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_L_DIGIT_3_OR_R, MT_ANALOG_POSITION},
   {IS_WAITING_FOR_L_DIGIT_3_OR_R, 'R',      &_MessageBuffer::parseLHexDigits, IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_L_DIGIT_3_OR_R, DIGIT,    &_MessageBuffer::parseLDecDigits, IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_R_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,  IS_WAITING_FOR_R_DIGIT_2,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_R_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,  IS_WAITING_FOR_R_DIGIT_3_OR_F, MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_R_DIGIT_3_OR_F, 'F',      &_MessageBuffer::parseRDigits, IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_R_DIGIT_3_OR_F, DIGIT,    &_MessageBuffer::parseRDigits, IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_F_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,  IS_WAITING_FOR_F_DIGIT_2,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_F_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,  IS_WAITING_FOR_F_DIGIT_3_OR_B, MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_F_DIGIT_3_OR_B, 'B',      &_MessageBuffer::parseFDigits, IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_F_DIGIT_3_OR_B, DIGIT,    &_MessageBuffer::parseFDigits, IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_B_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,  IS_WAITING_FOR_B_DIGIT_2,      MT_ANALOG_POSITION},
-  /* ParseDigit2B is different. It modifies the next state to be IS_MESSAGE_READY if in hex mode */
+  {IS_WAITING_FOR_R_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_R_DIGIT_2,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_R_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_R_DIGIT_3_OR_F, MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_R_DIGIT_3_OR_F, 'F',      &_MessageBuffer::parseRDigits,    IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_R_DIGIT_3_OR_F, DIGIT,    &_MessageBuffer::parseRDigits,    IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_F_DIGIT_2,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_F_DIGIT_3_OR_B, MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F_DIGIT_3_OR_B, 'B',      &_MessageBuffer::parseFDigits,    IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F_DIGIT_3_OR_B, DIGIT,    &_MessageBuffer::parseFDigits,    IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_B_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_B_DIGIT_2,      MT_ANALOG_POSITION},
+  /* 
+   * NB(ericzundel) ParseDigit2B is different. It modifies the next state to be IS_MESSAGE_READY if in hex mode.
+   * We could eliminate this snowflake by adding more states.
+   */
   {IS_WAITING_FOR_B_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2B, IS_WAITING_FOR_B_DIGIT_3,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_B_DIGIT_3,      DIGIT,    &_MessageBuffer::parseBDigits, IS_MESSAGE_READY,              MT_ANALOG_POSITION},
 };
@@ -253,11 +263,14 @@ static void printStateEntry(struct state_entry *entryPtr) {
  * For debugging
  */
 int _MessageBuffer::_printStateTable(){
-    for (int i = 0; i < sizeof(stateTable)/sizeof(struct state_entry); i++) {
-      Serial.print("Entry ");
-      Serial.print(i);
-      printStateEntry(&stateTable[i]);
-    }
+  Serial.print("Table Size: ");
+  Serial.print(sizeof(stateTable));
+  Serial.println(" bytes");
+  for (int i = 0; i < sizeof(stateTable)/sizeof(struct state_entry); i++) {
+    Serial.print("Entry ");
+    Serial.print(i);
+    printStateEntry(&stateTable[i]);
+  }
 }
 
 /**
@@ -380,6 +393,26 @@ bool GamePadModule::isSelectPressed()
   return !!(this->actionButtons & (1<<SELECT_BIT));
 }
 
+bool GamePadModule::isAPressed()
+{
+   return !!(this->actionButtons & (1<<BUTTON_A_BIT));
+}
+
+bool GamePadModule::isBPressed()
+{
+   return !!(this->actionButtons & (1<<BUTTON_B_BIT));
+}
+
+bool GamePadModule::isXPressed()
+{
+   return !!(this->actionButtons & (1<<BUTTON_X_BIT));
+}
+
+bool GamePadModule::isYPressed()
+{
+   return !!(this->actionButtons & (1<<BUTTON_Y_BIT));
+}
+
 //Green Button Checker
 bool GamePadModule::isTrianglePressed()
 {
@@ -447,17 +480,17 @@ int GamePadModule::_processInput(int inputChar)
     case MT_SELECT:
       this->actionButtons |= 1<<SELECT_BIT;
       break;
-    case MT_TRIANGLE:
-      this->actionButtons |= 1<<TRIANGLE_BIT;
+    case MT_BUTTON_A:
+      this->actionButtons |= 1<<BUTTON_A_BIT;
       break;
-    case MT_CIRCLE:
-      this->actionButtons |= 1<<CIRCLE_BIT;
+    case MT_BUTTON_B:
+      this->actionButtons |= 1<<BUTTON_B_BIT;
       break;
-    case MT_SQUARE:
-      this->actionButtons |= 1<<SQUARE_BIT;
+    case MT_BUTTON_X:
+      this->actionButtons |= 1<<BUTTON_X_BIT;
       break;
-    case MT_CROSS:
-      this->actionButtons |= 1<<CROSS_BIT;
+    case MT_BUTTON_Y:
+      this->actionButtons |= 1<<BUTTON_Y_BIT;
       break;
     case MT_ANALOG_POSITION:
       // Store the analog position
