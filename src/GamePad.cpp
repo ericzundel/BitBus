@@ -49,7 +49,9 @@ struct state_entry {
 #define ANY_CHAR (uint8_t)0xFF
 #define DIGIT    (uint8_t)0xFE
 
-const struct state_entry stateTable[] = {
+// State Table stored in flash memory
+// NB(ericzundel): You must copy an entry out with memcpy_P() to a local buffer
+const struct state_entry stateTable[] PROGMEM = {
   {IS_START,                      'S',      NULL,                             IS_MESSAGE_READY,              MT_START_BUTTON},
   {IS_START,                      'C',      NULL,                             IS_MESSAGE_READY,              MT_SELECT},
   {IS_START,                      'A',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_A},
@@ -105,6 +107,7 @@ void _MessageBuffer::clear() {
 }
 
 /**
+ * Store the first digit in the analog value.
  * Returns: 0 on success, 0xFF on failure
  */
 int _MessageBuffer::parseDigit1(int inputChar, enum _INPUT_STATE *nextStatePtr) {
@@ -115,6 +118,11 @@ int _MessageBuffer::parseDigit1(int inputChar, enum _INPUT_STATE *nextStatePtr) 
   return 0;
 }
 
+/**
+ * Store the second digit in the analog value.
+ * Returns: 0 on success, 0xFF on failure
+ */
+
 int _MessageBuffer::parseDigit2(int inputChar, enum _INPUT_STATE *nextStatePtr) {
 #if DEBUG
   DebugPrintln("In parseDigit2");
@@ -122,6 +130,15 @@ int _MessageBuffer::parseDigit2(int inputChar, enum _INPUT_STATE *nextStatePtr) 
   this->digitBuf[1] = inputChar;
   return 0;  
 }
+
+/**
+ * Store the second digit in the analog value when parsing the Back (Down) digits.
+ *
+ * Since this is the last digit in a hex mode version of the Analog Message,
+ * it will force the message ready state to override the decl in the state table.
+ *
+ * Returns: 0 on success
+ */
 
 int _MessageBuffer::parseDigit2B(int inputChar, enum _INPUT_STATE *nextStatePtr) {
 #if DEBUG
@@ -269,7 +286,9 @@ int _MessageBuffer::_printStateTable(){
   for (int i = 0; i < sizeof(stateTable)/sizeof(struct state_entry); i++) {
     Serial.print("Entry ");
     Serial.print(i);
-    printStateEntry(&stateTable[i]);
+    struct state_entry entry;
+    memcpy_P(&entry, &stateTable[i], sizeof(struct state_entry));
+    printStateEntry(&entry);
   }
 }
 
@@ -293,15 +312,18 @@ int _MessageBuffer::processInput(int inputChar) {
   // Go through the state table to find a matching state
   bool found = false;
   for (int i = 0; i < sizeof(stateTable)/sizeof(struct state_entry); i++) {
-    if ((this->inputState == stateTable[i].currentState)
-	&& ((inputChar == stateTable[i].inputChar)
-	    || (isDigit && (DIGIT == stateTable[i].inputChar)))) {
+    struct state_entry entry;
+    memcpy_P(&entry, &stateTable[i], sizeof(struct state_entry));
+    
+    if ((this->inputState == entry.currentState)
+	&& ((inputChar == entry.inputChar)
+	    || (isDigit && (DIGIT == entry.inputChar)))) {
 #if DEBUG
       DebugPrint("Found ");
       Serial.print(i);
-      printStateEntry(&stateTable[i]);
+      printStateEntry(&entry);
 #endif
-      _processStateEntry(&stateTable[i], inputChar);
+      _processStateEntry(&entry, inputChar);
       found = true;
       break;
     }
