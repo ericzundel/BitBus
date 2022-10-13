@@ -1,5 +1,8 @@
 /**
- * For communicating with the Controller mode in the BitBus App.
+ * GamePad: For communicating with the Controller mode in the BitBus App.
+ *
+ * General Use:
+ * Call BitBus.processInput(), then check the getters to see what has changed.
  *
  * The name GamePad is for compatibility with the Dabble library.
  */
@@ -10,17 +13,18 @@
 
 enum GAMEPAD_ERROR {
   GP_OK = 0,
-  GP_ERROR_EXPECTED_CONSTANT = 10,
-  GP_ERROR_UNHANDLED_MESSAGE_TYPE = 11,
+  GP_ERROR_UNHANDLED_MESSAGE_TYPE = 100,
+  GP_ERROR_NO_STATE_ENTRY = 101,
+  GP_ERROR_INVALID_DEC_DIGIT = 102,
+  GP_ERROR_UNEXPECTED_DEC_DIGIT = 103,
 };
 
 class GamePadModule
 {
  public:
-  //Constructor
   GamePadModule();
-  
-  //Checker Functions
+
+  // Getter Functions
   bool isStartPressed();
   bool isSelectPressed();
 
@@ -30,43 +34,45 @@ class GamePadModule
   bool isYPressed();
   bool isXPressed();
 
+  bool isUpPressed();
+  bool isDownPressed();
+  bool isLeftPressed();
+  bool isRightPressed();
+
+  uint8_t getLeftPosition();
+  uint8_t getRightPosition();
+  uint8_t getUpPosition();
+  uint8_t getDownPosition();
+
   // Dabble Compatibility functions
   bool isTrianglePressed(); // Same as Button B
   bool isCirclePressed();   // Same as Button Y
   bool isCrossPressed();    // Same as Button X
   bool isSquarePressed();   // Same as Button A
 
-  bool isUpPressed();
-  bool isDownPressed();
-  bool isLeftPressed();
-  bool isRightPressed();
 
-  // TODO(ericzundel): These methods I'd like to support eventually
-  
+  // TODO(ericzundel): Unimplemented Dabble compatibility methods
+  // NB(zundel): I'm not very keen on adding in floating point
+
   //  uint16_t getAngle();
   //  uint8_t getRadius();
   //  bool isPressed(uint8_t a);
-  
-  // TODO(ericzundel) Should I use floating point? The Dabble 
-  // class uses floating point, but the BitBus is all integer math.
-  //
+
   //  float getJoystickData(uint8_t b);
   //  float getx_axis();
   //  float gety_axis();
-	
+
   //  float getXaxisData();
   //  float getYaxisData();
 
-  // This method is only meant to be called by the BitBus module
+  // Process an input character. Only meant to be called by tests and the BitBus module.
   int _processInput(int inputChar);
+  // Clear the state of the action buttons. Only meant to be called by tests and the BitBus module.
   void _clearActionButtons();
+  // Clear the state of the entire object. Only meant to be called by tests and the BitBus module.
   void _clear();
 
-  uint8_t getLeftPosition();
-  uint8_t getRightPosition();
-  uint8_t getUpPosition();
-  uint8_t getDownPosition();
-  
+
  private:
   uint8_t actionButtons;
   uint8_t positionButtons;

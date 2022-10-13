@@ -1,3 +1,6 @@
+/*
+ * GamePadModule: Implements parsing of message from the BitBus Controller in Analog Mode
+ */
 #include "BitBus.h"
 #include "BitBusUtil.h"
 #include "GamePad.h"
@@ -33,7 +36,7 @@
 /**
  * Defines one entry in the state table.
  *
- * The enum values are stored as uint8_t to save space in the table 
+ * The enum values are stored as uint8_t to save space in the table
  * and free up some RAM.
  *
  */
@@ -59,23 +62,23 @@ const struct state_entry stateTable[] PROGMEM = {
   {IS_START,                      'X',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_X},
   {IS_START,                      'Y',      NULL,                             IS_MESSAGE_READY,              MT_BUTTON_Y},
   {IS_START,                      'L',      NULL,                             IS_WAITING_FOR_L_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'R',      NULL,                             IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'B',      NULL,                             IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_CONSTANT,       'F',      NULL,                             IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_R,              'R',      NULL,                             IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_B,              'B',      NULL,                             IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F,              'F',      NULL,                             IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_L_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_L_DIGIT_2,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_L_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_L_DIGIT_3_OR_R, MT_ANALOG_POSITION},
   {IS_WAITING_FOR_L_DIGIT_3_OR_R, 'R',      &_MessageBuffer::parseLHexDigits, IS_WAITING_FOR_R_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_L_DIGIT_3_OR_R, DIGIT,    &_MessageBuffer::parseLDecDigits, IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_L_DIGIT_3_OR_R, DIGIT,    &_MessageBuffer::parseLDecDigits, IS_WAITING_FOR_R,              MT_ANALOG_POSITION},
   {IS_WAITING_FOR_R_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_R_DIGIT_2,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_R_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_R_DIGIT_3_OR_F, MT_ANALOG_POSITION},
   {IS_WAITING_FOR_R_DIGIT_3_OR_F, 'F',      &_MessageBuffer::parseRDigits,    IS_WAITING_FOR_F_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_R_DIGIT_3_OR_F, DIGIT,    &_MessageBuffer::parseRDigits,    IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_R_DIGIT_3_OR_F, DIGIT,    &_MessageBuffer::parseRDigits,    IS_WAITING_FOR_F,              MT_ANALOG_POSITION},
   {IS_WAITING_FOR_F_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_F_DIGIT_2,      MT_ANALOG_POSITION},
   {IS_WAITING_FOR_F_DIGIT_2,      DIGIT,    &_MessageBuffer::parseDigit2,     IS_WAITING_FOR_F_DIGIT_3_OR_B, MT_ANALOG_POSITION},
   {IS_WAITING_FOR_F_DIGIT_3_OR_B, 'B',      &_MessageBuffer::parseFDigits,    IS_WAITING_FOR_B_DIGIT_1,      MT_ANALOG_POSITION},
-  {IS_WAITING_FOR_F_DIGIT_3_OR_B, DIGIT,    &_MessageBuffer::parseFDigits,    IS_WAITING_FOR_CONSTANT,       MT_ANALOG_POSITION},
+  {IS_WAITING_FOR_F_DIGIT_3_OR_B, DIGIT,    &_MessageBuffer::parseFDigits,    IS_WAITING_FOR_B,              MT_ANALOG_POSITION},
   {IS_WAITING_FOR_B_DIGIT_1,      DIGIT,    &_MessageBuffer::parseDigit1,     IS_WAITING_FOR_B_DIGIT_2,      MT_ANALOG_POSITION},
-  /* 
+  /*
    * NB(ericzundel) ParseDigit2B is different. It modifies the next state to be IS_MESSAGE_READY if in hex mode.
    * We could eliminate this snowflake by adding more states.
    */
@@ -126,9 +129,9 @@ int _MessageBuffer::parseDigit1(int inputChar, enum _INPUT_STATE *nextStatePtr) 
 int _MessageBuffer::parseDigit2(int inputChar, enum _INPUT_STATE *nextStatePtr) {
 #if DEBUG
   DebugPrintln("In parseDigit2");
-#endif  
+#endif
   this->digitBuf[1] = inputChar;
-  return 0;  
+  return 0;
 }
 
 /**
@@ -143,13 +146,14 @@ int _MessageBuffer::parseDigit2(int inputChar, enum _INPUT_STATE *nextStatePtr) 
 int _MessageBuffer::parseDigit2B(int inputChar, enum _INPUT_STATE *nextStatePtr) {
 #if DEBUG
   DebugPrintln("In parseDigit2B");
-#endif  
+#endif
   this->digitBuf[1] = inputChar;
   if(this->isHex) {
-    this->parseBDigits(inputChar, nextStatePtr);
+    // Override the input character to avoid error checking for 3rd decimal digit
+    this->parseBDigits(0xFF, nextStatePtr);
     *nextStatePtr = IS_MESSAGE_READY;
   }
-  return 0;  
+  return 0;
 }
 
 static bool _MessageBuffer::_isDecDigit(int inputChar) {
@@ -186,9 +190,38 @@ static uint8_t _MessageBuffer::_asciiToInt(int nybble) {
  */
 int _MessageBuffer::_parseDigits(int inputChar, uint8_t *valuePtr) {
   if (this->isHex) {
+    if (this->_isDecDigit(inputChar)) {
+#if DEBUG
+      DebugPrintln("ERROR: Unexpected Digit in third place");
+#endif
+      return GP_ERROR_UNEXPECTED_DEC_DIGIT;
+    }
     *valuePtr = (uint8_t) (_asciiToInt(this->digitBuf[0]) << 4) + _asciiToInt(this->digitBuf[1]);
   } else {
-    *valuePtr = (uint8_t)(_asciiToInt(this->digitBuf[0]) * 100) + (_asciiToInt(this->digitBuf[1]) * 10) + _asciiToInt(inputChar);
+    uint8_t digit = _asciiToInt(this->digitBuf[0]);
+    if (digit > 9) {
+#if DEBUG
+      DebugPrintln("ERROR: Invalid Decimal in hundreds");
+#endif
+      return GP_ERROR_INVALID_DEC_DIGIT;
+    }
+    *valuePtr = digit * 100;
+    digit = _asciiToInt(this->digitBuf[1]);
+    if (digit > 9) {
+#if DEBUG
+      DebugPrintln("ERROR: Invalid Decimal in tens");
+#endif
+      return GP_ERROR_INVALID_DEC_DIGIT;
+    }
+    *valuePtr = *valuePtr + (digit * 10);
+    digit = _asciiToInt(inputChar);
+    if (digit > 9) {
+#if DEBUG
+      DebugPrintln("ERROR: Invalid Decimal in ones");
+#endif
+      return GP_ERROR_INVALID_DEC_DIGIT;
+    }
+    *valuePtr = *valuePtr + digit;
   }
   return 0;
 }
@@ -218,31 +251,41 @@ int _MessageBuffer::parseLHexDigits(int inputChar, enum _INPUT_STATE *nextStateP
 }
 
 int _MessageBuffer::parseRDigits(int inputChar, enum _INPUT_STATE *nextStatePtr) {
+#if DEBUG
+  DebugPrint("In parseRDigits isHex:");
+  Serial.println(this->isHex);
+#endif
   uint8_t value = 0;
-  uint8_t result = _parseDigits(inputChar, &value);
+  int result = _parseDigits(inputChar, &value);
   this->rightValue = value;
   return result;
 }
 
 int _MessageBuffer::parseFDigits(int inputChar, enum _INPUT_STATE *nextStatePtr) {
+#if DEBUG
+  DebugPrintln("In parseFDigits");
+#endif
   uint8_t value = 0;
-  uint8_t result = _parseDigits(inputChar, &value);
+  int result = _parseDigits(inputChar, &value);
   this->upValue = value;
   return result;
 }
 
 int _MessageBuffer::parseBDigits(int inputChar, enum _INPUT_STATE *nextStatePtr) {
+#if DEBUG
+  DebugPrintln("In parseBDigits");
+#endif
   uint8_t value;
-  uint8_t result = _parseDigits(inputChar, &value);
+  int result = _parseDigits(inputChar, &value);
   this->downValue = value;
   return result;
 }
 
 /**
- * Evaluate this entry in the state table using the optional function and proceed 
+ * Evaluate this entry in the state table using the optional function and proceed
  * to the next state.
  *
- * Returns: 0 on success
+ * Returns: 0 on success, non-zero on failure
  */
 int _MessageBuffer::_processStateEntry(struct state_entry *entry, int inputChar) {
   enum _INPUT_STATE nextState = entry->nextState;
@@ -253,7 +296,7 @@ int _MessageBuffer::_processStateEntry(struct state_entry *entry, int inputChar)
       DebugPrint("ERROR: State Func returned: ");
       Serial.println(result);
 #endif
-      return 0xFF;
+      return result;
     }
   }
   if (MT_UNKNOWN != entry->messageType) {
@@ -306,15 +349,16 @@ int _MessageBuffer::processInput(int inputChar) {
   if (IS_MESSAGE_READY == this->inputState || IS_ERROR == this->inputState) {
     this->clear();
   }
-  
+
   bool isDigit = _isHexDigit(inputChar);
 
   // Go through the state table to find a matching state
   bool found = false;
+  int result = 0;
   for (int i = 0; i < sizeof(stateTable)/sizeof(struct state_entry); i++) {
     struct state_entry entry;
     memcpy_P(&entry, &stateTable[i], sizeof(struct state_entry));
-    
+
     if ((this->inputState == entry.currentState)
 	&& ((inputChar == entry.inputChar)
 	    || (isDigit && (DIGIT == entry.inputChar)))) {
@@ -323,12 +367,12 @@ int _MessageBuffer::processInput(int inputChar) {
       Serial.print(i);
       printStateEntry(&entry);
 #endif
-      _processStateEntry(&entry, inputChar);
       found = true;
+      result = _processStateEntry(&entry, inputChar);
       break;
     }
   }
-  
+
   if (!found) {
 #if DEBUG
     DebugPrint("ERROR: No state entry found for ");
@@ -339,11 +383,14 @@ int _MessageBuffer::processInput(int inputChar) {
     Serial.print(isDigit);
     Serial.println();
 #endif
-    this->inputState = IS_START;
-
-  }
-
-  if (IS_MESSAGE_READY == this->inputState) {
+    // This is an error state, reset everything.
+    this->clear();
+    return GP_ERROR_NO_STATE_ENTRY;
+  } else if (result) {
+    // This is an error state, reset everything.
+    this->clear();
+    return result;
+  } else if (IS_MESSAGE_READY == this->inputState) {
     return 0;
   }
 
@@ -492,7 +539,7 @@ int GamePadModule::_processInput(int inputChar)
 #endif
 
   this->actionButtons = 0;
-  
+
   if (!message.processInput(inputChar)) {
     // Got a new message
     switch (message.messageType) {
@@ -544,6 +591,7 @@ int GamePadModule::_processInput(int inputChar)
       break;
     case MT_UNKNOWN:
     default:
+      // Likely indicates an error in coding the state table
 #if DEBUG
       Serial.print("Error: Unhandled Message Type ");
       Serial.println(message.messageType);

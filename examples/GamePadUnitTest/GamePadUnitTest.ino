@@ -1,10 +1,3 @@
-#include <BitBus.h>
-#include <GamePad.h>
-#include <MessageBuffer.h>
-
-// Testing and Debugging Routines
-#include <BitBusUtil.h>
-
 /*
  * Unit tests for the BitBus Controller Module.
  *
@@ -12,6 +5,13 @@
  *
  * Interface Based on: https://thestempedia.com/docs/dabble/game-pad-module/
  */
+#include <BitBus.h>
+#include <GamePad.h>
+#include <MessageBuffer.h>
+
+// Testing and Debugging Routines
+#include <BitBusUtil.h>
+
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);    // Make sure your Serial Monitor is also set at this baud rate.
@@ -32,7 +32,7 @@ void testMessageBufferInternals() {
   Serial.println(" State Table:");
   mb._printStateTable();
   Serial.println();
-  
+
   Serial.println(" Test isDecDigit");
 
   ASSERT(mb._isDecDigit('0'), "expected 0 to be Dec Digit");
@@ -88,7 +88,7 @@ void testMessageBufferActionButtons() {
   mb.clear();
   mb.processInput('S');
   ASSERTV(mb.messageType == MT_START_BUTTON, "expected MT_START_BUTTON", mb.messageType);
-  ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState); 
+  ASSERTV(mb.inputState == IS_MESSAGE_READY, "expected IS_MESSAGE_READY", mb.inputState);
 }
 
 void testMessageBufferAnalogPositionDec() {
@@ -110,7 +110,7 @@ void testMessageBufferAnalogPositionDec() {
   ASSERTV(mb.inputState == IS_WAITING_FOR_L_DIGIT_3_OR_R, "expected IS_WAITING_FOR_L_DIGIT_3_OR_F", mb.inputState);
 
   mb.processInput('1');
-  ASSERTV(mb.inputState == IS_WAITING_FOR_CONSTANT, "expected IS_WAITING_FOR_CONSTANT", mb.inputState);
+  ASSERTV(mb.inputState == IS_WAITING_FOR_R, "expected IS_WAITING_FOR_R", mb.inputState);
 
   mb.processInput('R');
   ASSERTV(mb.inputState == IS_WAITING_FOR_R_DIGIT_1, "expected IS_WAITING_FOR_R_DIGIT_1", mb.inputState);
@@ -124,7 +124,7 @@ void testMessageBufferAnalogPositionDec() {
   ASSERTV(mb.messageType == MT_ANALOG_POSITION, "expected MT_ANALOG_POSITION", mb.messageType);
 
   mb.processInput('0');
-  ASSERTV(mb.inputState == IS_WAITING_FOR_CONSTANT, "expected IS_WAITING_FOR_CONSTANT", mb.inputState);
+  ASSERTV(mb.inputState == IS_WAITING_FOR_F, "expected IS_WAITING_FOR_F", mb.inputState);
   ASSERTV(mb.messageType == MT_ANALOG_POSITION, "expected MT_ANALOG_POSITION", mb.messageType);
 
   mb.processInput('F');
@@ -140,7 +140,7 @@ void testMessageBufferAnalogPositionDec() {
   ASSERTV(mb.messageType == MT_ANALOG_POSITION, "expected MT_ANALOG_POSITION", mb.messageType);
 
   mb.processInput('0');
-  ASSERTV(mb.inputState == IS_WAITING_FOR_CONSTANT, "expected IS_WAITING_FOR_CONSTANT", mb.inputState);
+  ASSERTV(mb.inputState == IS_WAITING_FOR_B, "expected IS_WAITING_FOR_B", mb.inputState);
   ASSERTV(mb.messageType == MT_ANALOG_POSITION, "expected MT_ANALOG_POSITION", mb.messageType);
 
   mb.processInput('B');
@@ -169,7 +169,7 @@ void testMessageBufferAnalogPositionHex() {
   printTest("MessageBufferAnalogPositionHex");
 
   mb.clear();
-  
+
   ASSERTV(mb.messageType == MT_UNKNOWN, "expected MT_UNKNOWN", mb.messageType);
   ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
 
@@ -224,6 +224,98 @@ void testMessageBufferAnalogPositionHex() {
   ASSERTV(mb.downValue == 0x0A, "expected down == 0x0A", mb.downValue);
 }
 
+void testMessageBufferInvalidInput() {
+  printTest("MessageBufferInvalidInput");
+  mb.clear();
+
+  ASSERTV(mb.messageType == MT_UNKNOWN, "expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+
+  Serial.println(" Test unexpected constant in start");
+  int result = mb.processInput('?');
+  ASSERTV(result == GP_ERROR_NO_STATE_ENTRY, "expected error on ?", result);
+  ASSERTV(mb.messageType == MT_UNKNOWN, "? expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+
+  Serial.println(" Test unexpected value in Analog Position");
+  mb.clear();
+  result = mb.processInput('L');
+  ASSERTV(result == 1, "expected incomplete message", result);
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "L expected MT_ANALOG_POSITION", mb.messageType);
+  result = mb.processInput('X');
+  ASSERTV(result == GP_ERROR_NO_STATE_ENTRY, "expected error on X", result);
+  ASSERTV(mb.messageType == MT_UNKNOWN, "X expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+
+  Serial.println(" Test unexpected constant in Analog Position");
+  mb.clear();
+  result = mb.processInput('L');
+  ASSERTV(result == 1, "expected incomplete message", result);
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "L expected MT_ANALOG_POSITION", mb.messageType);
+  result = mb.processInput('0');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('1');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "1 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('G');
+  ASSERTV(result == GP_ERROR_NO_STATE_ENTRY, "expected error on A", result);
+  ASSERTV(mb.messageType == MT_UNKNOWN, "A expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+
+  Serial.println(" Test hex in dec Analog Position");
+  mb.clear();
+  result = mb.processInput('L');
+  ASSERTV(result == 1, "expected incomplete message", result);
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "L expected MT_ANALOG_POSITION", mb.messageType);
+  result = mb.processInput('0');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('0');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('1');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "1 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('R');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "R expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('2');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('3');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('F');
+  ASSERTV(mb.messageType == MT_UNKNOWN, "F expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+
+  Serial.println(" Test dec in hex Analog Position");
+  mb.clear();
+  result = mb.processInput('L');
+  ASSERTV(result == 1, "expected incomplete message", result);
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "L expected MT_ANALOG_POSITION", mb.messageType);
+  result = mb.processInput('0');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('1');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "1 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('R');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "R expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('2');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "0 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('3');
+  ASSERTV(mb.messageType == MT_ANALOG_POSITION, "1 expected MT_ANALOG_POSITION", mb.messageType);
+  ASSERTV(result == 1, "expected incomplete message", result);
+  result = mb.processInput('4');
+  ASSERTV(result == GP_ERROR_UNEXPECTED_DEC_DIGIT, "expected error on 4", result);
+  ASSERTV(mb.messageType == MT_UNKNOWN, "B expected MT_UNKNOWN", mb.messageType);
+  ASSERTV(mb.inputState == IS_START, "expected IS_START", mb.inputState);
+}
+
 /**
  * Send characters to GamePad._processInput()
  */
@@ -236,7 +328,7 @@ void sendToGamePadProcessInput(char *inputStr) {
 void testGamePadInternal() {
   printTest("GamePadInternal");
   GamePad._clear();
-  
+
   // Nothing should be set
   ASSERT(!GamePad.isUpPressed(), "unexpected UP");
   ASSERT(!GamePad.isDownPressed(), "unexpected DOWN");
@@ -288,7 +380,7 @@ void testGamePadInternal() {
   ASSERT(!GamePad.isStartPressed(), "unexpected START");
   ASSERT(!GamePad.isSelectPressed(), "unexpected SELECT");
 
-  
+
   Serial.println(" Testing Select button");
   GamePad._clear();
   sendToGamePadProcessInput("C");
@@ -454,8 +546,9 @@ void unitTest() {
   assertionFailures = 0;
   testMessageBufferInternals();
   testMessageBufferActionButtons();
-  testMessageBufferAnalogPositionDec();\
+  testMessageBufferAnalogPositionDec();
   testMessageBufferAnalogPositionHex();
+  testMessageBufferInvalidInput();
   testGamePadInternal();
 
   if(assertionFailures) {
