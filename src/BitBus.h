@@ -5,6 +5,7 @@
  * Date: October 5, 2022
  *
  * Currently only SoftwareSerial is supported on pins 2 and 3.
+ * Currently, only the Controller/Gamepad is supported in Analog (joystick) mode.
  * 
  * The software interface is meant to be very similar to the Dabble
  * software interface for easy portability, even though the protocols

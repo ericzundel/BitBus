@@ -51,7 +51,14 @@ class GamePadModule
 
   // This method is only meant to be called by the BitBus module
   int _processInput(int inputChar);
+  void _clearActionButtons();
+  void _clear();
 
+  uint8_t getLeftPosition();
+  uint8_t getRightPosition();
+  uint8_t getUpPosition();
+  uint8_t getDownPosition();
+  
  private:
   uint8_t actionButtons;
   uint8_t positionButtons;

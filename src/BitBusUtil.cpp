@@ -3,9 +3,9 @@
 
 int assertionFailures = 0;
 
-// Returns: 0 on success, non zero if assertion fails
-int Assert(bool assertionValue, PGM_P errorMsg) {
+static int _assert(bool assertionValue, PGM_P errorMsg) {
   if (!assertionValue) {
+    SerialPrint_P(PSTR("ASSERTION FAILED: "));
     SerialPrint_P(errorMsg);
     assertionFailures++;
     return -1;
@@ -13,9 +13,26 @@ int Assert(bool assertionValue, PGM_P errorMsg) {
   return 0;
 }
 
-// Returns: 0 on success, non zero if assertion fails
+/**
+ * Test an assertion in a unit test.
+ *
+ * Returns: 0 on success, non zero if assertion fails
+ */
+int Assert(bool assertionValue, PGM_P errorMsg) {
+  int result = _assert(assertionValue, errorMsg);
+  if (result) {
+    Serial.println();
+  }
+  return result;
+}
+
+/**
+ * Test an assertion in a unit test and print a value on failure.
+ *
+ * Returns: 0 on success, non zero if assertion fails
+ */
 int Assert(bool assertionValue, PGM_P errorMsg, int value) {
-  int result = Assert(assertionValue, errorMsg);
+  int result = _assert(assertionValue, errorMsg);
   if (result) {
     SerialPrint_P(PSTR(" Assertion Value: "));
     Serial.println(value);

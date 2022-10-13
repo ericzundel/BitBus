@@ -13,11 +13,12 @@
 
 void setup() {
   // put your setup code here, to run once:
-  Serial.begin(250000);      // make sure your Serial Monitor is also set at this baud rate.
+  Serial.begin(57600);      // make sure your Serial Monitor is also set at this baud rate.
   BitBus.begin(9600);      //Enter baudrate of your bluetooth.Connect bluetooth on Bluetooth port present on evive.
 }
 
 void loop() {
+  delay(100);
   BitBus.processInput();             //this function is used to refresh data obtained from smartphone.Hence calling this function is mandatory in order to get data properly from your mobile.
   Serial.print("KeyPressed: ");
   if (GamePad.isUpPressed())
@@ -32,12 +33,12 @@ void loop() {
 
   if (GamePad.isLeftPressed())
   {
-    Serial.print("Left");
+    Serial.print("LEFT");
   }
 
   if (GamePad.isRightPressed())
   {
-    Serial.print("Right");
+    Serial.print("RIGHT");
   }
 
   if (GamePad.isSquarePressed())
@@ -86,8 +87,17 @@ void loop() {
   Serial.print('\t');
   float d = GamePad.getYaxisData();
   Serial.print("y_axis: ");
-  Serial.println(d);
-  Serial.println();
+  Serial.print(d);
 #endif
+
+  Serial.print(" Left: ");
+  Serial.print(GamePad.getLeftPosition());
+  Serial.print(" Right: ");
+  Serial.print(GamePad.getRightPosition());
+  Serial.print(" Up: ");
+  Serial.print(GamePad.getUpPosition());
+  Serial.print(" Down: ");
+  Serial.print(GamePad.getDownPosition());
+  Serial.println();
 
 }

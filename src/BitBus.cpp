@@ -31,10 +31,18 @@ void BitBusClass::begin(unsigned long baudRate, int rx, int tx)
   bbSerial = newSerial;
 }
 
-// Process incoming input from the serial port
+/** 
+ * Process incoming input from the serial port
+ *  Note that the GamePadaction buttons are cleared before processing any new input.
+ * The up/down/left/right buttons are persistent because we are emulating them
+ * using Analog Mode.
+ */
 void BitBusClass::processInput()
 {
-  if (bbSerial->available()) {
+
+  GamePad._clearActionButtons();
+  
+  while (bbSerial->available()) {
   /* Just punt processing over the the GamePad module because that 
    * is all the library suports right now.
    */

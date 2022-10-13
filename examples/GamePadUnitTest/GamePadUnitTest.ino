@@ -1,11 +1,17 @@
-#include <BitBusUtil.h>
+#include <BitBus.h>
 #include <GamePad.h>
 #include <MessageBuffer.h>
 
+// Testing and Debugging Routines
+#include <BitBusUtil.h>
+
 /*
- * Unit tests for 
-   Interface Based on: https://thestempedia.com/docs/dabble/game-pad-module/
-*/
+ * Unit tests for the BitBus Controller Module.
+ *
+ * On success, it should print "All tests passed." at the end of the run.
+ *
+ * Interface Based on: https://thestempedia.com/docs/dabble/game-pad-module/
+ */
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);      // make sure your Serial Monitor is also set at this baud rate.

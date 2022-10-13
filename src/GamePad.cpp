@@ -6,7 +6,7 @@
 #include "Arduino.h"
 #include "SoftwareSerial.h"
 
-#define DEBUG 1
+#define DEBUG 0
 
 // Action Button Bit Reference
 // For member action_button_value
@@ -274,7 +274,7 @@ int _MessageBuffer::processInput(int inputChar) {
   if (IS_MESSAGE_READY == this->inputState || IS_ERROR == this->inputState) {
     this->clear();
   }
-
+  
   bool isDigit = _isHexDigit(inputChar);
 
   // Go through the state table to find a matching state
@@ -317,31 +317,58 @@ int _MessageBuffer::processInput(int inputChar) {
 
 // Class Constructor
 GamePadModule::GamePadModule() {
-  posLeft = posRight = posUp = posDown = 0;
-  actionButtons = 0;
+  this->_clear();
 }
 
+/**
+ * Reset the action button state.
+ */
+void GamePadModule::_clearActionButtons() {
+  this->actionButtons = 0;
+}
+
+/**
+ * Reset the module state.
+ */
+void GamePadModule::_clear() {
+  this->actionButtons = this->positionButtons = 0;
+  this->posLeft = this->posRight = this->posUp = this->posDown = 0;
+}
+
+/**
+ * Returns: true if the up button is pressed.  Emulated in analog mode.
+ */
 bool GamePadModule::isUpPressed()
 {
   return !!(this->positionButtons & (1<<UP_BIT));
 }
 
+/**
+ * Returns: true if the down button is pressed.  Emulated in analog mode.
+ */
 bool GamePadModule::isDownPressed()
 {
   return !!(this->positionButtons & (1<<DOWN_BIT));
 }
 
+
+/**
+ * Returns: true if the left button is pressed.  Emulated in analog mode.
+ */
 bool GamePadModule::isLeftPressed()
 {
   return !!(this->positionButtons & (1<<LEFT_BIT));
 }
 
+/**
+ * Returns: true if the right button is pressed.  Emulated in analog mode.
+ */
 bool GamePadModule::isRightPressed()
 {
   return !!(this->positionButtons & (1<<RIGHT_BIT));
 }
 
-//Orange Button Checker
+// Orange Button Checker
 bool GamePadModule::isStartPressed()
 {
   return !!(this->actionButtons & (1<<START_BIT));
@@ -375,99 +402,42 @@ bool GamePadModule::isSquarePressed()
   return !!(this->actionButtons & (1<<SQUARE_BIT));
 }
 
-/*-------------------------------------------------------------------*/
-#if USE_SYNCRONOUS_READ
-
-uint8_t asciiToInt(uint8_t nybble) {
-  if (nybble <= '9' && nybble >= '0') {
-    return nybble - '0';
-  }
-  if (nybble <= 'F' && nybble >= 'A') {
-    return 10 + nybble - 'A';
-  }
-  return 0xFF;
+uint8_t GamePadModule::getLeftPosition() {
+  return this->posLeft;
 }
 
-char readByte() {
-  // Block and wait for the next character
-  while (btSerial.available() <= 0) {
-    // do nothing
-  }
-  return btSerial.read();
+uint8_t GamePadModule::getRightPosition() {
+  return this->posRight;
 }
 
-uint8_t readThreeDigitAscii() {
-  uint8_t hundreds = asciiToInt(readByte());
-  uint8_t tens = asciiToInt(readByte());
-  uint8_t ones = asciiToInt(readByte());
-  return (hundreds * 100) + (tens * 10) + ones;
+uint8_t GamePadModule::getUpPosition() {
+  return this->posUp;
+}
+
+uint8_t GamePadModule::getDownPosition() {
+  return this->posDown;
 }
 
 /**
-   A synchronous version of reading an analog joystick message in Decimal.
-
-   This was test code, just here for reference.
-
-   Read the 16 character message from the bitbus app when
-   the controller is set to analog mode with decimal input.
-   LXXXRXXXFXXXBXXX
-   Where L,R,F,B are the ascii values for L,R,F,B and
-   X is the ascii value for '0'-'9'.
-
-   In Hex mode, message is 12 digits long the digits are 2 long and also may contain 'A'-'F'
-
-   Return: 0 on success, nonzero on failure
-*/
-int8_t readAnalogMessageSyncronous() {
-  const byte messageLength = 12;
-  char c = readByte();
-  while (c != 'L') {
-    c = readByte();
-  }
-
-  // Next two characters define the left value
-  analogMessage.leftValue = readThreeDigitAscii();
-
-  c = readByte();
-  if (c != 'R') {
-    DebugPrint("ERROR: Expected 'R' Got: ");
-    Serial.println(c);
-    return -1;
-  }
-  analogMessage.rightValue = readThreeDigitAscii();
-
-  c = readByte();
-  if (c != 'F') {
-    DebugPrint("ERROR: Expected 'F' Got: ");
-    Serial.println(c);
-    return -1;
-  }
-
-  analogMessage.upValue = readThreeDigitAscii();
-
-  c = readByte();
-  if (c != 'B') {
-    DebugPrint("ERROR: Expected 'B' Got: ");
-    Serial.println(c);
-    return -1;
-  }
-  analogMessage.downValue = readThreeDigitAscii();
-
-  return 0;
-}
-#endif // USE_SYNCHRONOUS_READ
-/*-------------------------------------------------------------------*/
-
-
-// Handle the work of processing GamePad specific input.
+ * Handle the work of processing GamePad specific input.
+ *
+ */
 int GamePadModule::_processInput(int inputChar)
 {
 #if DEBUG
-  DebugPrint("GPM Input: '");
-  Serial.print(inputChar);
-  DebugPrintln("'");
+  DebugPrint("GPM Input: ");
+  if (inputChar < 128) {
+    Serial.print("'");
+    Serial.print((char)inputChar);
+    Serial.print("'");
+  } else {
+    Serial.print(inputChar);
+  }
+  Serial.println();
 #endif
 
+  this->actionButtons = 0;
+  
   if (!message.processInput(inputChar)) {
     // Got a new message
     switch (message.messageType) {
@@ -501,15 +471,20 @@ int GamePadModule::_processInput(int inputChar)
 	// Stop position
 	this->positionButtons = 0;
       } else {
-	int largest = 1<<UP_BIT;
+	uint8_t largest = this->posUp;
+	this->positionButtons = 1<<UP_BIT;
 	if (this->posDown > largest) {
-	  largest = 1<<DOWN_BIT;
-	} else if (this->posLeft > largest) {
-	  largest = 1<<LEFT_BIT;
-	} else if (this->posRight > largest) {
-	  largest = 1<<RIGHT_BIT;
+	  largest = this->posDown;
+	  this->positionButtons = 1<<DOWN_BIT;
 	}
-	this->positionButtons = largest;
+	if (this->posLeft > largest) {
+	  largest = this->posLeft;
+	  this->positionButtons = 1<<LEFT_BIT;
+	}
+	if (this->posRight > largest) {
+	  largest = this->posRight;
+	  this->positionButtons = 1<<RIGHT_BIT;
+	}
       }
       break;
     case MT_UNKNOWN:
@@ -520,6 +495,9 @@ int GamePadModule::_processInput(int inputChar)
 #endif
       return GP_ERROR_UNHANDLED_MESSAGE_TYPE;
       break;
-    } 
+    }
+
+    // Clear out the message state for parsing the next message
+    message.clear();
   }
 }
